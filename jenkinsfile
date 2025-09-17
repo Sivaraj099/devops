@@ -1,0 +1,47 @@
+pipeline {
+    agent any
+
+    environment {
+        AWS_REGION = 'ap-south-1'
+        ECR_ACCOUNT = '193501891521'
+        FRONTEND_REPO = "${ECR_ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com/frontend"
+        BACKEND_REPO = "${ECR_ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com/backend"
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git branch: 'main', url: 'https://github.com/yourusername/Dev_g5-main.git'
+            }
+        }
+
+        stage('Build Frontend Image') {
+            steps {
+                sh """
+                aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_ACCOUNT.dkr.ecr.$AWS_REGION.amazonaws.com
+                docker build -t frontend ./frontend
+                docker tag frontend:latest $FRONTEND_REPO:latest
+                docker push $FRONTEND_REPO:latest
+                """
+            }
+        }
+
+        stage('Build Backend Image') {
+            steps {
+                sh """
+                docker build -t backend ./backend
+                docker tag backend:latest $BACKEND_REPO:latest
+                docker push $BACKEND_REPO:latest
+                """
+            }
+        }
+
+        stage('Deploy to Kubernetes') {
+            steps {
+                sh """
+                kubectl apply -f k8s-manifests/
+                """
+            }
+        }
+    }
+}
