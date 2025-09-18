@@ -1,4 +1,5 @@
-const API_BASE = "http://127.0.0.1:5000";
+// Point API to your EC2 instance public IP instead of localhost
+const API_BASE = "http://<EC2_PUBLIC_IP>:5000";  
 let allEmployees = []; // Cache for filtering
 
 // Handle form submit (Add or Update)
@@ -21,7 +22,6 @@ document.getElementById("employeeForm").addEventListener("submit", async (e) => 
       response = await fetch(`${API_BASE}/employees/${empId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        // Update payload for PUT might not need field/org, but we'll send it anyway
         body: JSON.stringify({ name, role, email }) 
       });
       document.getElementById("result").innerHTML = ""; // Clear result on update
@@ -88,7 +88,6 @@ async function loadEmployees() {
     const res = await fetch(`${API_BASE}/employees`);
     allEmployees = await res.json();
     renderEmployees(allEmployees);
-    // Clear the filter input on reset
     document.getElementById("roleFilter").value = "";
   } catch (error) {
     console.error("Failed to load employees:", error);
@@ -118,7 +117,7 @@ function editEmployee(id, name, role, email) {
   document.getElementById("field").value = "";
   document.getElementById("organization").value = "";
   
-  window.scrollTo(0, 0); // Scroll to the form for easy editing
+  window.scrollTo(0, 0);
 }
 
 // Delete Employee
