@@ -23,7 +23,8 @@ pipeline {
                 sh '''
                 if ! command -v python3 &> /dev/null; then
                     echo "Python3 not found, installing..."
-                    apt-get update -y && apt-get install python3 python3-pip -y
+                    sudo apt-get update -y
+                    sudo apt-get install python3 python3-pip -y
                 fi
                 '''
             }
@@ -114,3 +115,15 @@ pipeline {
         }
     }
 }
+    post {
+        always {
+            echo "==== Cleaning up workspace ===="
+            cleanWs()
+        }
+        success {
+            echo "==== Pipeline completed successfully! ===="
+        }
+        failure {
+            echo "==== Pipeline failed. Please check the logs. ===="
+        }
+    }
