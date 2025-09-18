@@ -1,18 +1,15 @@
 pipeline {
     agent any
-
     environment {
-        AWS_REGION    = "ap-south-1"
-        ECR_ACCOUNT   = "193501891521"
-        FRONTEND_REPO = "${ECR_ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com/frontend"
-        BACKEND_REPO  = "${ECR_ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com/backend"
+        AWS_REGION = "ap-south-1"
+        AWS_ACCOUNT_ID = "193501891521"
+        ECR_URL = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
     }
-
     stages {
         stage('Checkout') {
             steps {
                 echo "==== Checking out source code from GitHub ===="
-                git branch: 'main', 
+                git branch: 'main',
                     url: 'https://github.com/Sivaraj099/devops.git',
                     credentialsId: 'github-pat'
             }
@@ -20,33 +17,41 @@ pipeline {
 
         stage('Build Frontend Image') {
             steps {
-                echo "==== Building & Pushing Frontend Image to ECR ===="
-                sh """
-                aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com
-                docker build -t frontend ./frontend
-                docker tag frontend:latest ${FRONTEND_REPO}:latest
-                docker push ${FRONTEND_REPO}:latest
-                """
+                withAWS(credentials: 'aws-creds', region: "${AWS_REGION}") {
+                    sh """
+                      echo "==== Building & Pushing Frontend Image to ECR ===="
+                      aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_URL}
+                      docker build -t frontend ./frontend
+                      docker tag frontend:latest ${ECR_URL}/frontend:latest
+                      docker push ${ECR_URL}/frontend:latest
+                    """
+                }
             }
         }
 
         stage('Build Backend Image') {
             steps {
-                echo "==== Building & Pushing Backend Image to ECR ===="
-                sh """
-                docker build -t backend ./backend
-                docker tag backend:latest ${BACKEND_REPO}:latest
-                docker push ${BACKEND_REPO}:latest
-                """
+                withAWS(credentials: 'aws-creds', region: "${AWS_REGION}") {
+                    sh """
+                      echo "==== Building & Pushing Backend Image to ECR ===="
+                      aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_URL}
+                      docker build -t backend ./backend
+                      docker tag backend:latest ${ECR_URL}/backend:latest
+                      docker push ${ECR_URL}/backend:latest
+                    """
+                }
             }
         }
 
         stage('Deploy to Kubernetes') {
             steps {
-                echo "==== Deploying to Kubernetes Cluster ===="
-                sh """
-                kubectl apply -f k8s-manifests/
-                """
+                withAWS(credentials: 'aws-creds', region: "${AWS_REGION}") {
+                    sh """
+                      echo "==== Deploying to EKS Cluster ===="
+                      aws eks update-kubeconfig --name my-eks-cluster --region ${AWS_REGION}
+                      kubectl apply -f k8s-manifests/
+                    """
+                }
             }
         }
     }
