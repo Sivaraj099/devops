@@ -1,5 +1,8 @@
 // Point API to your EC2 instance public IP instead of localhost
-const API_BASE = "http://<EC2_PUBLIC_IP>:5000";  
+const API_BASE = "http://3.110.245.75:5000";  
+// OR you can use your EC2 public DNS:
+// const API_BASE = "http://ec2-3-110-245-75.ap-south-1.compute.amazonaws.com:5000";
+
 let allEmployees = []; // Cache for filtering
 
 // Handle form submit (Add or Update)
@@ -24,7 +27,7 @@ document.getElementById("employeeForm").addEventListener("submit", async (e) => 
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, role, email }) 
       });
-      document.getElementById("result").innerHTML = ""; // Clear result on update
+      document.getElementById("result").innerHTML = ""; 
     } else {
       // ADD employee
       response = await fetch(`${API_BASE}/employees`, {
@@ -52,7 +55,6 @@ document.getElementById("employeeForm").addEventListener("submit", async (e) => 
         throw new Error(errData.error || "An unknown error occurred.");
     }
 
-    // Reset form to "Add Employee" mode
     document.getElementById("employeeId").value = "";
     document.getElementById("submitBtn").innerText = "Add Employee";
     
@@ -82,7 +84,7 @@ function renderEmployees(employees) {
     .join("");
 }
 
-// Load All Employees from Backend
+// Load All Employees
 async function loadEmployees() {
   try {
     const res = await fetch(`${API_BASE}/employees`);
@@ -105,7 +107,7 @@ function filterEmployees() {
   renderEmployees(filtered);
 }
 
-// Edit Employee → prefill form and scroll to top
+// Edit Employee
 function editEmployee(id, name, role, email) {
   document.getElementById("name").value = name;
   document.getElementById("role").value = role;
@@ -113,7 +115,6 @@ function editEmployee(id, name, role, email) {
   document.getElementById("employeeId").value = id;
   document.getElementById("submitBtn").innerText = "Update Employee";
 
-  // Reset and disable field/organization as they are for onboarding only
   document.getElementById("field").value = "";
   document.getElementById("organization").value = "";
   
