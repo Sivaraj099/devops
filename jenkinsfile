@@ -2,21 +2,25 @@ pipeline {
     agent any
 
     environment {
-        AWS_REGION = 'ap-south-1'
-        ECR_ACCOUNT = '193501891521'
+        AWS_REGION   = 'ap-south-1'
+        ECR_ACCOUNT  = '193501891521'
         FRONTEND_REPO = "${ECR_ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com/frontend"
-        BACKEND_REPO = "${ECR_ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com/backend"
+        BACKEND_REPO  = "${ECR_ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com/backend"
     }
 
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/yourusername/Dev_g5-main.git'
+                echo "==== Checking out source code from GitHub ===="
+                git branch: 'main', 
+                    url: 'https://github.com/Sivaraj099/devops.git',
+                    credentialsId: 'github-pat'
             }
         }
 
         stage('Build Frontend Image') {
             steps {
+                echo "==== Building & Pushing Frontend Image to ECR ===="
                 sh """
                 aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_ACCOUNT.dkr.ecr.$AWS_REGION.amazonaws.com
                 docker build -t frontend ./frontend
@@ -28,6 +32,7 @@ pipeline {
 
         stage('Build Backend Image') {
             steps {
+                echo "==== Building & Pushing Backend Image to ECR ===="
                 sh """
                 docker build -t backend ./backend
                 docker tag backend:latest $BACKEND_REPO:latest
@@ -38,6 +43,7 @@ pipeline {
 
         stage('Deploy to Kubernetes') {
             steps {
+                echo "==== Deploying to Kubernetes Cluster ===="
                 sh """
                 kubectl apply -f k8s-manifests/
                 """
