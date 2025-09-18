@@ -17,6 +17,40 @@ pipeline {
             }
         }
 
+        // Add Test Stage for Backend
+        stage('Run Backend Tests') {
+            steps {
+                script {
+                    echo "==== Running Backend Tests ===="
+                    withAWS(region: "${AWS_REGION}", credentials: 'aws-creds') {
+                        // Install dependencies and run tests for the backend
+                        sh '''
+                        cd backend
+                        pip install -r requirements.txt
+                        pytest tests/ --maxfail=1 --disable-warnings -q
+                        '''
+                    }
+                }
+            }
+        }
+
+        // Add Test Stage for Frontend
+        stage('Run Frontend Tests') {
+            steps {
+                script {
+                    echo "==== Running Frontend Tests ===="
+                    withAWS(region: "${AWS_REGION}", credentials: 'aws-creds') {
+                        // Install dependencies and run tests for the frontend
+                        sh '''
+                        cd frontend
+                        npm install
+                        npm test -- --maxWorkers=1
+                        '''
+                    }
+                }
+            }
+        }
+
         stage('Build Frontend Image') {
             steps {
                 script {
