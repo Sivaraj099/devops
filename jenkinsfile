@@ -17,7 +17,19 @@ pipeline {
             }
         }
 
-        // Add Test Stage for Backend
+        // Ensure Python is installed
+        stage('Install Python') {
+            steps {
+                sh '''
+                if ! command -v python3 &> /dev/null; then
+                    echo "Python3 not found, installing..."
+                    apt-get update -y && apt-get install python3 python3-pip -y
+                fi
+                '''
+            }
+        }
+
+        // Run Backend Tests
         stage('Run Backend Tests') {
             steps {
                 script {
@@ -34,7 +46,7 @@ pipeline {
             }
         }
 
-        // Add Test Stage for Frontend
+        // Run Frontend Tests
         stage('Run Frontend Tests') {
             steps {
                 script {
